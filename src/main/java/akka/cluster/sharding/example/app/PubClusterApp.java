@@ -22,7 +22,7 @@ public class PubClusterApp {
       Config config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).withFallback(ConfigFactory.load());
       // Create an Akka system
       ActorSystem system = ActorSystem.create("ClusterSystem", config);
-     ActorRef pub = system.actorOf(Props.create(Publisher.class).withRouter(new RoundRobinPool(1)), "publisher");
+     ActorRef pub = system.actorOf(Props.create(Publisher.class).withRouter(new RoundRobinPool(5)), "publisher");
       try {
         Thread.sleep(20000);
       } catch (InterruptedException e) {
