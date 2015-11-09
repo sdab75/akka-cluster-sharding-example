@@ -29,7 +29,7 @@ public class PubClusterApp {
         e.printStackTrace();
       }
         String enityId="MyEntity123";
-      for(int i=0;i<10;i++){
+      for(int i=0;i<200;i++){
         System.out.println("Debug..."+i);
         MyCounter myCounter =new MyCounter(enityId,i,"Counter -->"+i);
         pub.tell(myCounter,null);
