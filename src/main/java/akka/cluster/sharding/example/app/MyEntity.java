@@ -37,6 +37,7 @@ public class MyEntity extends UntypedPersistentActor {
         if (msg instanceof MyCounter) {
             recoveredCount++;
             System.out.println("Worker : Recovered count -->" + recoveredCount + " Recovered Event -->" + ((MyCounter) msg).getMsg());
+            processValidatedMsg(((MyCounter) msg));
         } else {
             unhandled(msg);
         }
@@ -60,6 +61,14 @@ public class MyEntity extends UntypedPersistentActor {
         super.onRecoveryFailure(cause, event);
     }
 
+    private void processValidatedMsg(MyCounter evt){
+        counter++;
+        if(counter==4){
+            throw  new RuntimeException("Failed processing counter --->"+evt.toString());
+        }
+        System.out.println("Worker: Persisted count " + counter);
+        System.out.println("Worker: onReceiveCommand ####### changed state, successfully persisted event and publishing the event-->" + evt.getMsg() + "Counter " + counter);
+    }
     @Override
     public void onReceiveCommand(Object msg) {
         if (msg instanceof MyCounter) {
@@ -70,9 +79,7 @@ public class MyEntity extends UntypedPersistentActor {
             evt.setMsg(evt.getMsg() + "-->Validated");
             persistAsync(evt, new Procedure<MyCounter>() {
                 public void apply(MyCounter evt) throws Exception {
-                    counter++;
-                    System.out.println("Worker: Persisted count " + counter);
-                    System.out.println("Worker: onReceiveCommand ####### changed state, successfully persisted event and publishing the event-->" + evt.getMsg() + "Counter " + counter);
+                    processValidatedMsg(evt);
                     saveSnapshot(evt);
                 }
             });

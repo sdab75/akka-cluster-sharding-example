@@ -26,11 +26,10 @@ public class SubClusterApp1 {
 
             ShardRegion.MessageExtractor messageExtractor = new ShardRegion.MessageExtractor() {
 
-                int shard = 1001;
-
                 @Override
                 public String entityId(Object message) {
-                    return String.valueOf(shard);
+                    MyCounter counter=(MyCounter) message;
+                    return String.valueOf(counter.getEntityId());
                 }
 
                 @Override
@@ -42,7 +41,10 @@ public class SubClusterApp1 {
                 public String shardId(Object message) {
                     int numberOfShards = 100;
                     if (message instanceof MyCounter) {
-                        return String.valueOf(shard % numberOfShards);
+                        MyCounter counter=(MyCounter) message;
+                        String shardId= String.valueOf(counter.getEntityId().length() % numberOfShards);
+                        System.out.println("Shard id -------->"+shardId);
+                        return  shardId;
                     } else {
                         return null;
                     }

@@ -22,15 +22,16 @@ public class PubClusterApp {
       Config config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).withFallback(ConfigFactory.load());
       // Create an Akka system
       ActorSystem system = ActorSystem.create("ClusterSystem", config);
-     ActorRef pub = system.actorOf(Props.create(Publisher.class).withRouter(new RoundRobinPool(5)), "publisher");
+     ActorRef pub = system.actorOf(Props.create(Publisher.class).withRouter(new RoundRobinPool(1)), "publisher");
       try {
         Thread.sleep(20000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
-      for(int i=0;i<200;i++){
+        String enityId="MyEntity123";
+      for(int i=0;i<10;i++){
         System.out.println("Debug..."+i);
-        MyCounter myCounter =new MyCounter(i,"Counter -->"+i);
+        MyCounter myCounter =new MyCounter(enityId,i,"Counter -->"+i);
         pub.tell(myCounter,null);
       }
     }

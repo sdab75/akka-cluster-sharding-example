@@ -1,9 +1,6 @@
 package akka.cluster.sharding.example.app;
 
-import akka.actor.ActorRef;
-import akka.actor.OneForOneStrategy;
-import akka.actor.SupervisorStrategy;
-import akka.actor.UntypedActor;
+import akka.actor.*;
 import akka.cluster.client.ClusterClientReceptionist;
 import akka.cluster.pubsub.DistributedPubSub;
 import akka.cluster.pubsub.DistributedPubSubMediator;
@@ -30,9 +27,13 @@ public class Subscriber extends UntypedActor {
 
     }
 
-    //private final ActorRef myEntity = getContext().actorOf(Props.create(MyEntity.class), "myEntity");
+    //If use this approach in multi node situation then sharding gets co
+    ActorRef myEntity = getContext().actorOf(Props.create(MyEntity.class), "myEntity");
 
-    ActorRef myEntity = ClusterSharding.get(getContext().system()).shardRegion("MyEntity");
+    //If use the below commented lookup way i can see the sharding working as expected but the supervisor doesn't work.
+    //ActorRef myEntity = ClusterSharding.get(getContext().system()).shardRegion("MyEntity");
+
+
     private SupervisorStrategy strategy = new OneForOneStrategy(-1, Duration.create("5 seconds"), new Function<Throwable, SupervisorStrategy.Directive>() {
         @Override
         public SupervisorStrategy.Directive apply(Throwable t) {
@@ -54,7 +55,9 @@ public class Subscriber extends UntypedActor {
     public void onReceive(Object msg) {
         if (msg instanceof MyCounter) {
             log.info("Got: {}", msg);
+
             myEntity.forward(msg, getContext());
+
         } else if (msg instanceof DistributedPubSubMediator.Subscribe)
             log.info("subscribe started !!!!!!!!!!!!");
         else if (msg instanceof DistributedPubSubMediator.SubscribeAck)
