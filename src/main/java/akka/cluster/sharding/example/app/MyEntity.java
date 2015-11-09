@@ -15,11 +15,13 @@ import akka.persistence.UntypedPersistentActor;
 public class MyEntity extends UntypedPersistentActor {
     LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
+/*
     int counter;
 
     int cmdCount;
 
     int recoveredCount;
+*/
 
     @Override
     public void preStart() throws Exception {
@@ -35,9 +37,8 @@ public class MyEntity extends UntypedPersistentActor {
     @Override
     public void onReceiveRecover(Object msg) {
         if (msg instanceof MyCounter) {
-            recoveredCount++;
-            System.out.println("Worker : Recovered count -->" + recoveredCount + " Recovered Event -->" + ((MyCounter) msg).getMsg());
-            processValidatedMsg(((MyCounter) msg));
+            System.out.println("Worker :  Recovered Event -->" + ((MyCounter) msg).getMsg());
+            processEvent(((MyCounter) msg));
         } else {
             unhandled(msg);
         }
@@ -61,26 +62,22 @@ public class MyEntity extends UntypedPersistentActor {
         super.onRecoveryFailure(cause, event);
     }
 
-    private void processValidatedMsg(MyCounter evt){
-        counter++;
-        if(counter==4){
+    private void processEvent(MyCounter evt){
+        if(evt.getCount()==190){
             throw  new RuntimeException("Failed processing counter --->"+evt.toString());
         }
-        System.out.println("Worker: Persisted count " + counter);
-        System.out.println("Worker: onReceiveCommand ####### changed state, successfully persisted event and publishing the event-->" + evt.getMsg() + "Counter " + counter);
+        System.out.println("Worker: Successfully processed persisted event-->" + evt.getMsg());
+        saveSnapshot(evt);
     }
     @Override
     public void onReceiveCommand(Object msg) {
         if (msg instanceof MyCounter) {
-            cmdCount++;
-            System.out.println("Commands count " + cmdCount);
-            log.info("Worker Got: {}", ((MyCounter) msg).getMsg());
+            log.info("Worker: onReceiveCommand #######", ((MyCounter) msg).getMsg());
             MyCounter evt = ((MyCounter) msg);
             evt.setMsg(evt.getMsg() + "-->Validated");
             persistAsync(evt, new Procedure<MyCounter>() {
                 public void apply(MyCounter evt) throws Exception {
-                    processValidatedMsg(evt);
-                    saveSnapshot(evt);
+                    processEvent(evt);
                 }
             });
 

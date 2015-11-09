@@ -55,9 +55,11 @@ public class SubClusterApp1 {
             ActorSystem system = ActorSystem.create("ClusterSystem", config);
 
             Option<String> roleOption = Option.none();
+
             ClusterShardingSettings settings = ClusterShardingSettings.create(system);
             ClusterSharding.get(system).start("MyEntity", Props.create(MyEntity.class), settings, messageExtractor);
             ActorRef subscriber1 = system.actorOf(Props.create(Subscriber.class), "subscriber");
+
             ClusterSharding.get(system).start("Subscriber", Props.create(Subscriber.class), settings, messageExtractor);
         }
     }
