@@ -27,12 +27,12 @@ public class Subscriber extends UntypedActor {
 
     }
 
-    //If use this approach in multi node situation then sharding gets co
-    //ActorRef myEntity = getContext().actorOf(Props.create(MyEntity.class), "myEntity");
+    //If use this approach in multi node situation the message persistence goes havoc.
+    ActorRef myEntity = getContext().actorOf(Props.create(MyEntity.class), "myEntity");
 
 
     //If use the below commented lookup way i can see the sharding working as expected but the supervisor doesn't work.
-    ActorRef myEntity = ClusterSharding.get(getContext().system()).shardRegion("MyEntity");
+    //ActorRef myEntity = ClusterSharding.get(getContext().system()).shardRegion("MyEntity");
 
 
     private SupervisorStrategy strategy = new OneForOneStrategy(-1, Duration.create("5 seconds"), new Function<Throwable, SupervisorStrategy.Directive>() {
