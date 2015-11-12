@@ -1,6 +1,9 @@
 package akka.cluster.sharding.example.app;
 
-import akka.actor.*;
+import akka.actor.ActorRef;
+import akka.actor.OneForOneStrategy;
+import akka.actor.SupervisorStrategy;
+import akka.actor.UntypedActor;
 import akka.cluster.client.ClusterClientReceptionist;
 import akka.cluster.pubsub.DistributedPubSub;
 import akka.cluster.pubsub.DistributedPubSubMediator;
@@ -27,22 +30,16 @@ public class Subscriber extends UntypedActor {
 
     }
 
-    //If use this approach in multi node situation the message persistence goes havoc.
-    ActorRef myEntity = getContext().actorOf(Props.create(MyEntity.class), "myEntity");
-
-
-    //If use the below commented lookup way i can see the sharding working as expected but the supervisor doesn't work.
-    //ActorRef myEntity = ClusterSharding.get(getContext().system()).shardRegion("MyEntity");
-
-
     private SupervisorStrategy strategy = new OneForOneStrategy(-1, Duration.create("5 seconds"), new Function<Throwable, SupervisorStrategy.Directive>() {
         @Override
         public SupervisorStrategy.Directive apply(Throwable t) {
+            System.out.println("**********In Subscriber supervisorStrategy SupervisorStrategy.Directive apply " +
+                    "*******************");
             if (t instanceof NullPointerException) {
-                System.out.println("oneToOne: restartOrEsclate strategy, restarting the actor");
+                System.out.println("oneToOne Subscriber: restartOrEsclate strategy, restarting the actor");
                 return restart();
             } else {
-                System.out.println("$$$$$$$$$$$$$$$$$ oneToOne: final else called escalating to oneToAll");
+                System.out.println("$$$$$$$$$$$$$$$$$ Subscriber oneToOne: final else called escalating to oneToAll");
                 return escalate();
             }
         }
@@ -50,15 +47,15 @@ public class Subscriber extends UntypedActor {
 
     @Override
     public SupervisorStrategy supervisorStrategy() {
+        System.out.println("**********In Subscriber supervisorStrategy *******************");
         return strategy;
     }
+    //get supervisor actor from shard
+    ActorRef myEntitySupervisor = ClusterSharding.get(getContext().system()).shardRegion("MyEntitySupervisor");
 
     public void onReceive(Object msg) {
         if (msg instanceof MyCounter) {
-            log.info("Got: {}", msg);
-
-            myEntity.forward(msg, getContext());
-
+            myEntitySupervisor.tell(msg,getSelf());
         } else if (msg instanceof DistributedPubSubMediator.Subscribe)
             log.info("subscribe started !!!!!!!!!!!!");
         else if (msg instanceof DistributedPubSubMediator.SubscribeAck)

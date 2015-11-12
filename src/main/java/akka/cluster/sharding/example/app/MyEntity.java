@@ -8,6 +8,9 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Procedure;
 import akka.persistence.UntypedPersistentActor;
+import scala.concurrent.duration.Duration;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by davenkat on 9/28/2015.
@@ -15,23 +18,16 @@ import akka.persistence.UntypedPersistentActor;
 public class MyEntity extends UntypedPersistentActor {
     LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-/*
-    int counter;
-
-    int cmdCount;
-
-    int recoveredCount;
-*/
-
     @Override
     public void preStart() throws Exception {
         System.out.println("Worker Startup ###########################");
         super.preStart();
+        context().setReceiveTimeout(Duration.create(120, TimeUnit.SECONDS));
     }
 
     @Override
     public String persistenceId() {
-        return "counter-worker-" + getSelf().path().name();
+        return "counter-worker-" + getContext().parent().path().name();
     }
 
     @Override
@@ -64,7 +60,7 @@ public class MyEntity extends UntypedPersistentActor {
 
     private void processEvent(MyCounter evt){
         if(evt.getCount()==190){
-            throw  new RuntimeException("Failed processing counter --->"+evt.toString());
+            throw  new RuntimeException("Failed processing counter --->" +  evt.toString());
         }
         System.out.println("Worker: Successfully processed persisted event-->" + evt.getMsg());
         saveSnapshot(evt);
@@ -75,7 +71,7 @@ public class MyEntity extends UntypedPersistentActor {
             log.info("Worker: onReceiveCommand #######", ((MyCounter) msg).getMsg());
             MyCounter evt = ((MyCounter) msg);
             evt.setMsg(evt.getMsg() + "-->Validated");
-            persistAsync(evt, new Procedure<MyCounter>() {
+            persist(evt, new Procedure<MyCounter>() {
                 public void apply(MyCounter evt) throws Exception {
                     processEvent(evt);
                 }

@@ -6,7 +6,6 @@ import akka.actor.Props;
 import akka.cluster.sharding.ClusterSharding;
 import akka.cluster.sharding.ClusterShardingSettings;
 import akka.cluster.sharding.ShardRegion;
-import akka.japi.Option;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
@@ -54,13 +53,12 @@ public class SubClusterApp1 {
             // Create an Akka system
             ActorSystem system = ActorSystem.create("ClusterSystem", config);
 
-            Option<String> roleOption = Option.none();
-
             ClusterShardingSettings settings = ClusterShardingSettings.create(system);
-            ClusterSharding.get(system).start("MyEntity", Props.create(MyEntity.class), settings, messageExtractor);
-            ActorRef subscriber1 = system.actorOf(Props.create(Subscriber.class), "subscriber");
-
-            ClusterSharding.get(system).start("Subscriber", Props.create(Subscriber.class), settings, messageExtractor);
+            ClusterSharding.get(system).start("MyEntity", Props.create(MyEntity.class), settings,
+                    messageExtractor);
+            ClusterSharding.get(system).start("MyEntitySupervisor", Props.create(MyEntitySupervisor.class), settings,
+                    messageExtractor);
+            ActorRef subscriber1 = system.actorOf(Props.create(Subscriber.class), "subscriber1");
         }
     }
 }

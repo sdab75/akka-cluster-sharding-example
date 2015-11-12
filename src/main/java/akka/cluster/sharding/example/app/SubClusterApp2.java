@@ -6,7 +6,6 @@ import akka.actor.Props;
 import akka.cluster.sharding.ClusterSharding;
 import akka.cluster.sharding.ClusterShardingSettings;
 import akka.cluster.sharding.ShardRegion;
-import akka.japi.Option;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
@@ -42,7 +41,9 @@ public class SubClusterApp2 {
                     int numberOfShards = 100;
                     if (message instanceof MyCounter) {
                         MyCounter counter=(MyCounter) message;
-                        return String.valueOf(counter.getEntityId().length() % numberOfShards);
+                        String shardId= String.valueOf(counter.getEntityId().length() % numberOfShards);
+                        System.out.println("Shard id -------->"+shardId);
+                        return  shardId;
                     } else {
                         return null;
                     }
@@ -52,11 +53,14 @@ public class SubClusterApp2 {
             // Create an Akka system
             ActorSystem system = ActorSystem.create("ClusterSystem", config);
 
-            Option<String> roleOption = Option.none();
             ClusterShardingSettings settings = ClusterShardingSettings.create(system);
-            ClusterSharding.get(system).start("MyEntity", Props.create(MyEntity.class), settings, messageExtractor);
-            ActorRef subscriber1 = system.actorOf(Props.create(Subscriber.class), "subscriber");
+            ClusterSharding.get(system).start("MyEntity", Props.create(MyEntity.class), settings,
+                    messageExtractor);
+            ClusterSharding.get(system).start("MyEntitySupervisor", Props.create(MyEntitySupervisor.class), settings,
+                    messageExtractor);
             ClusterSharding.get(system).start("Subscriber", Props.create(Subscriber.class), settings, messageExtractor);
+            ActorRef subscriber2 = system.actorOf(Props.create(Subscriber.class), "subscriber2");
+
         }
     }
 }

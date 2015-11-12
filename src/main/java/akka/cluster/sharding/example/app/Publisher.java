@@ -20,7 +20,6 @@ public class Publisher extends UntypedActor {
             MyCounter myCounter =(MyCounter) msg;
             //Following is for broadcasting
             mediator.tell(new DistributedPubSubMediator.Publish("content", myCounter,true),getSelf());
-
         }
         else if (msg instanceof DistributedPubSubMediator.SubscribeAck)
             log.info("publisher subscribing");
